@@ -202,7 +202,7 @@ def main() -> None:
             header, _, rest = existing.partition("\n\n")
             changelog_path.write_text(f"{header}\n\n{new_entry}{rest}", encoding="utf-8")
         else:
-            header = f"###### tags: `ai` `gemini` `copilot`\n\n# Changelog\n\n"
+            header = f"###### tags: `ai` `gemini` `copilot`\n\n# Gemini CLI & GitHub Copilot CLI 指令更新 Changelog\n\n"
             changelog_path.write_text(f"{header}{new_entry}{existing}", encoding="utf-8")
         print(f"📋  Changelog updated: {CHANGELOG_FILE}")
     else:
@@ -223,7 +223,7 @@ def main() -> None:
     # 8. Assemble output markdown
     output = f"""###### tags: `ai` `gemini` `copilot`
 
-# Copilot CLI Slash Command 參考文件（繁體中文）
+# Gemini CLI & GitHub Copilot CLI 指令參考
 
 > 自動抓取並翻譯，更新時間：{now_str}
 >
