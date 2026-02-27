@@ -34,8 +34,14 @@ uv sync
 
 ```bash
 cp .env.example .env
-# 編輯 .env，填入 GEMINI_API_KEY=your-api-key
 ```
+
+### 環境變數
+
+| 變數 | 必填 | 預設值 | 說明 |
+|------|------|--------|------|
+| `GEMINI_API_KEY` | ✅ | — | Google Gemini API 金鑰 |
+| `CHANGELOG_MAX_ENTRIES` | | `10` | changelog.md 最多保留幾筆更新記錄，`0` 表示不限制 |
 
 ## 使用
 

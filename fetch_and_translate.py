@@ -39,6 +39,43 @@ OUTPUT_FILE = "output.md"
 CACHE_FILE = "_cache.json"
 CHANGELOG_FILE = "changelog.md"
 TRANSLATE_MODEL = "gemini-2.0-flash"
+CHANGELOG_MAX_ENTRIES = int(os.environ.get("CHANGELOG_MAX_ENTRIES", "10"))
+
+CHANGELOG_HEADER = ("###### tags: `ai` `gemini` `copilot`\n\n"
+                    "# Gemini CLI & GitHub Copilot CLI 指令更新 Changelog\n\n")
+ENTRY_SEPARATOR = "\n---\n\n"
+
+
+# ── Changelog helpers ──────────────────────────────────────────────────────────
+
+
+def parse_changelog(content: str) -> tuple[str, list[str]]:
+    """
+    Split changelog content into (header, entries).
+    Each entry starts with '## ' and is separated by ENTRY_SEPARATOR.
+    """
+    if content.startswith("###### tags"):
+        # Header ends at the first '## ' entry
+        idx = content.find("\n## ")
+        if idx == -1:
+            return content, []
+        header = content[: idx + 1]  # include the trailing newline
+        body = content[idx + 1:]
+    else:
+        header = CHANGELOG_HEADER
+        body = content
+
+    # Split on separator; filter empty chunks
+    raw_entries = body.split(ENTRY_SEPARATOR)
+    entries = [e for e in raw_entries if e.strip().startswith("## ")]
+    return header, entries
+
+
+def build_changelog(header: str, entries: list[str]) -> str:
+    """Reassemble header + entries into a changelog string."""
+    if not entries:
+        return header
+    return header + ENTRY_SEPARATOR.join(entries) + ENTRY_SEPARATOR
 
 
 # ── Cache helpers ──────────────────────────────────────────────────────────────
@@ -193,18 +230,16 @@ def main() -> None:
         diff_note = "（首次執行，無前次資料可比較）" if is_first_run else ""
         diff_sections = (diff_gemini or "### Google Gemini CLI\n\n（無變更）\n") + "\n" + (
                 diff_copilot or "### GitHub Copilot CLI\n\n（無變更）\n")
-        new_entry = f"## {now_str} {diff_note}\n\n{diff_sections}\n---\n\n"
+        new_entry = f"## {now_str} {diff_note}\n\n{diff_sections}"
 
         changelog_path = Path(CHANGELOG_FILE)
         existing = changelog_path.read_text(encoding="utf-8") if changelog_path.exists() else ""
-        if existing.startswith("###### tags"):
-            # Insert after the header block (first blank line after header)
-            header, _, rest = existing.partition("\n\n")
-            changelog_path.write_text(f"{header}\n\n{new_entry}{rest}", encoding="utf-8")
-        else:
-            header = f"###### tags: `ai` `gemini` `copilot`\n\n# Gemini CLI & GitHub Copilot CLI 指令更新 Changelog\n\n"
-            changelog_path.write_text(f"{header}{new_entry}{existing}", encoding="utf-8")
-        print(f"📋  Changelog updated: {CHANGELOG_FILE}")
+        header, entries = parse_changelog(existing)
+        entries = [new_entry] + entries
+        if CHANGELOG_MAX_ENTRIES > 0:
+            entries = entries[:CHANGELOG_MAX_ENTRIES]
+        changelog_path.write_text(build_changelog(header if existing else CHANGELOG_HEADER, entries), encoding="utf-8")
+        print(f"📋  Changelog updated: {CHANGELOG_FILE} ({len(entries)} entries)")
     else:
         print("📋  No source changes detected, skipping changelog.")
 
